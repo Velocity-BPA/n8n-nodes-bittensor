@@ -1,6 +1,5 @@
 # n8n-nodes-bittensor
 
-> [!IMPORTANT]
 > **[Velocity BPA Licensing Notice]**
 >
 > This n8n node is licensed under the Business Source License 1.1 (BSL 1.1).
@@ -9,47 +8,31 @@
 >
 > For licensing information, visit https://velobpa.com/licensing or contact licensing@velobpa.com.
 
-A comprehensive n8n community node package for the **Bittensor** blockchain network. This marketplace-ready toolkit enables seamless integration with the Bittensor decentralized AI network, supporting TAO staking, delegation, subnet queries, validator operations, and AI network interactions.
+A comprehensive n8n community node for interacting with the Bittensor decentralized AI network. This node provides 5 core resources enabling automation of staking operations, delegation management, subnet monitoring, validator tracking, and network analytics within your n8n workflows.
 
-![Bittensor](https://img.shields.io/badge/Bittensor-TAO-00D4AA?style=flat-square)
-![n8n](https://img.shields.io/badge/n8n-community%20node-FF6D5A?style=flat-square)
-![License](https://img.shields.io/badge/license-BSL--1.1-blue?style=flat-square)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=flat-square&logo=typescript)
+![n8n Community Node](https://img.shields.io/badge/n8n-Community%20Node-blue)
+![License](https://img.shields.io/badge/license-BSL--1.1-blue)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
+![Bittensor](https://img.shields.io/badge/Bittensor-Compatible-green)
+![TAO](https://img.shields.io/badge/TAO-Supported-orange)
+![Subtensor](https://img.shields.io/badge/Subtensor-Ready-purple)
 
 ## Features
 
-### 16 Resource Categories with 80+ Operations
-
-| Resource | Description |
-|----------|-------------|
-| **Wallet** | Balance queries, TAO transfers, address validation, transaction history |
-| **Staking** | Stake management, APY calculations, delegation tracking |
-| **Delegation** | Delegate discovery, take rates, nominator management |
-| **Subnet** | Subnet info, hyperparameters, neuron lists, registration costs |
-| **Neuron** | UID/hotkey lookups, active neuron discovery, performance metrics |
-| **Registration** | Burned registration, cost queries, status checks |
-| **Validator** | Validator info, weights, bonds, performance metrics |
-| **Miner** | Miner info, axon endpoints, incentives, trust scores |
-| **Metagraph** | Full/lite metagraph sync, UIDs, hotkeys, stake matrices |
-| **Weights** | Weight queries, setting, validation, commit/reveal |
-| **Query** | AI subnet queries, text/image generation, custom inference |
-| **Root** | Root network info, senate, emission schedules |
-| **Governance** | Proposals, voting, senate management |
-| **Block** | Block queries, chain info, event monitoring |
-| **Emission** | Supply stats, emission distribution, halving schedules |
-| **Utility** | RAO/TAO conversion, address encoding, mnemonic generation |
-
-### Three Credential Types
-
-1. **Bittensor Network** - Subtensor connection with coldkey/hotkey support
-2. **Bittensor API** - Taostats and explorer API integration
-3. **Subnet Credentials** - Subnet-specific endpoints and model access
+- **Staking Operations** - Automate TAO staking, unstaking, and stake management across validators
+- **Delegation Management** - Monitor and manage delegate performance, rewards, and nominations
+- **Subnet Analytics** - Track subnet metrics, registration costs, and performance data
+- **Validator Monitoring** - Real-time validator statistics, rankings, and emission tracking
+- **Network Insights** - Access network-wide statistics, block data, and consensus metrics
+- **Multi-Network Support** - Compatible with mainnet, testnet, and custom Bittensor networks
+- **Real-time Data** - Live blockchain data with configurable refresh intervals
+- **Automated Alerts** - Set up notifications for stake changes, validator events, and network updates
 
 ## Installation
 
 ### Community Nodes (Recommended)
 
-1. Open your n8n instance
+1. Open n8n
 2. Go to **Settings** → **Community Nodes**
 3. Click **Install a community node**
 4. Enter `n8n-nodes-bittensor`
@@ -58,228 +41,206 @@ A comprehensive n8n community node package for the **Bittensor** blockchain netw
 ### Manual Installation
 
 ```bash
-# Navigate to n8n custom nodes directory
-cd ~/.n8n/custom
-
-# Clone or extract the package
-git clone https://github.com/Velocity-BPA/n8n-nodes-bittensor.git
-cd n8n-nodes-bittensor
-
-# Install dependencies and build
-npm install
-npm run build
-
-# Restart n8n
+cd ~/.n8n
+npm install n8n-nodes-bittensor
 ```
 
 ### Development Installation
 
 ```bash
-# Extract the zip file
-unzip n8n-nodes-bittensor.zip
+git clone https://github.com/Velocity-BPA/n8n-nodes-bittensor.git
 cd n8n-nodes-bittensor
-
-# Install dependencies
 npm install
-
-# Build the project
 npm run build
-
-# Create symlink to n8n custom nodes directory
 mkdir -p ~/.n8n/custom
 ln -s $(pwd) ~/.n8n/custom/n8n-nodes-bittensor
-
-# Restart n8n
 n8n start
 ```
 
 ## Credentials Setup
 
-### Bittensor Network Credentials
-
-| Field | Description |
-|-------|-------------|
-| Network | Select network (Finney, Testnet, Local, Custom) |
-| WebSocket Endpoint | Custom WebSocket URL (for custom network) |
-| Authentication Type | Read Only, Coldkey, Hotkey, or Both |
-| Coldkey Mnemonic | 12/24 word mnemonic for main wallet |
-| Hotkey Mnemonic | 12/24 word mnemonic for operational key |
-
-### Bittensor API Credentials
-
-| Field | Description |
-|-------|-------------|
-| API Provider | Taostats, Bittensor Explorer, or Custom |
-| API Key | API key for the provider |
-| Rate Limit | Maximum requests per second |
-
-### Subnet Credentials
-
-| Field | Description |
-|-------|-------------|
-| Subnet | Select known subnet or custom |
-| Custom Subnet UID | Netuid for custom subnet |
-| Validator Endpoint | Optional validator endpoint |
-| Miner Endpoint | Optional direct miner endpoint |
-| Query Timeout | Timeout for subnet queries |
+| Field | Description | Required |
+|-------|-------------|----------|
+| API Key | Your Bittensor API key for authenticated requests | Yes |
+| Network | Target network (mainnet, testnet, custom) | Yes |
+| RPC Endpoint | Custom RPC endpoint URL (if using custom network) | No |
+| Wallet Address | Your wallet address for stake operations | No |
 
 ## Resources & Operations
 
-### Wallet Operations
-- **Get Balance** - Query TAO balance for any address
-- **Get Stake** - Get stake amount for coldkey-hotkey pair
-- **Get Overview** - Complete wallet overview with balance and stakes
-- **Transfer** - Send TAO to another address
-- **Validate Address** - Verify Bittensor address format
-- **Get Transfer History** - Transaction history via Taostats API
+### 1. Staking
 
-### Staking Operations
-- **Get Stake Info** - Detailed staking information
-- **Add Stake** - Delegate TAO to a validator/hotkey
-- **Remove Stake** - Undelegate TAO from a hotkey
-- **Get Stakes by Coldkey** - All stakes for a coldkey
-- **Calculate APY** - Estimated annual percentage yield
+| Operation | Description |
+|-----------|-------------|
+| Add Stake | Stake TAO tokens to a specific validator |
+| Remove Stake | Unstake TAO tokens from a validator |
+| Get Stake Info | Retrieve current stake information for an address |
+| List Stakes | Get all active stakes for a wallet |
+| Calculate Rewards | Estimate staking rewards for a given amount |
+| Get Stake History | Retrieve historical staking transactions |
 
-### Subnet Operations
-- **Get All Subnets** - List all registered subnets
-- **Get Subnet Info** - Detailed subnet information
-- **Get Hyperparameters** - Subnet configuration parameters
-- **Get Subnet Neurons** - List neurons in a subnet
-- **Get Registration Cost** - Current burn cost to register
+### 2. Delegation
 
-### Metagraph Operations
-- **Get Full Metagraph** - Complete metagraph data
-- **Get Metagraph Lite** - Lightweight version (UIDs and hotkeys)
-- **Get UIDs** - All UIDs in a subnet
-- **Get Hotkeys** - All hotkeys in a subnet
+| Operation | Description |
+|-----------|-------------|
+| Delegate | Delegate TAO tokens to a validator |
+| Undelegate | Remove delegation from a validator |
+| Get Delegations | List all active delegations |
+| Delegate Performance | Get performance metrics for delegates |
+| Calculate Delegation Rewards | Estimate delegation rewards |
+| Get Delegate Info | Retrieve detailed delegate information |
 
-### Utility Operations
-- **RAO to TAO** - Convert smallest unit to TAO
-- **TAO to RAO** - Convert TAO to RAO
-- **Validate Address** - Check address validity
-- **Generate Mnemonic** - Create new wallet mnemonic
+### 3. Subnets
+
+| Operation | Description |
+|-----------|-------------|
+| List Subnets | Get all available subnets |
+| Get Subnet Info | Retrieve detailed subnet information |
+| Get Registration Cost | Get current registration cost for a subnet |
+| Get Subnet Metrics | Retrieve performance metrics for a subnet |
+| List Subnet Validators | Get all validators in a specific subnet |
+| Get Subnet Emissions | Retrieve emission data for a subnet |
+
+### 4. Validators
+
+| Operation | Description |
+|-----------|-------------|
+| List Validators | Get all validators with basic information |
+| Get Validator Info | Retrieve detailed validator information |
+| Get Validator Performance | Get performance metrics for a validator |
+| Get Validator Emissions | Retrieve emission history for a validator |
+| Check Validator Status | Get current online/offline status |
+| Get Validator Rankings | Retrieve validator rankings by various metrics |
+
+### 5. Network
+
+| Operation | Description |
+|-----------|-------------|
+| Get Network Stats | Retrieve overall network statistics |
+| Get Block Info | Get information about a specific block |
+| Get Latest Block | Retrieve the most recent block data |
+| Get Network Parameters | Get current network configuration parameters |
+| Get Total Issuance | Retrieve total TAO token supply information |
+| Get Consensus Data | Access current consensus mechanism data |
 
 ## Usage Examples
 
-### Check Wallet Balance
+```javascript
+// Example 1: Check validator performance before staking
+const validatorInfo = await this.helpers.request({
+  method: 'GET',
+  url: '/validators/5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL',
+  headers: {
+    'Authorization': `Bearer ${credentials.apiKey}`
+  }
+});
 
-```json
-{
-  "resource": "wallet",
-  "operation": "getBalance",
-  "address": "5F3sa2TJAWMqDhXG6jhV4N8ko9SxwGy8TpaNS1repo5EYjQX"
+if (validatorInfo.performance_score > 0.8) {
+  // Proceed with staking 100 TAO
+  const stakeResult = await this.helpers.request({
+    method: 'POST',
+    url: '/staking/add',
+    body: {
+      validator_address: '5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL',
+      amount: 100,
+      wallet_address: credentials.walletAddress
+    }
+  });
 }
 ```
 
-### Get Subnet Info
+```javascript
+// Example 2: Monitor subnet registration opportunities
+const subnets = await this.helpers.request({
+  method: 'GET',
+  url: '/subnets',
+  headers: {
+    'Authorization': `Bearer ${credentials.apiKey}`
+  }
+});
 
-```json
-{
-  "resource": "subnet",
-  "operation": "getSubnetInfo",
-  "netuid": 1
+const affordableSubnets = subnets.filter(subnet => 
+  subnet.registration_cost <= 1000 && subnet.available_slots > 0
+);
+
+for (const subnet of affordableSubnets) {
+  console.log(`Subnet ${subnet.netuid}: ${subnet.registration_cost} TAO, ${subnet.available_slots} slots`);
 }
 ```
 
-### Convert RAO to TAO
+```javascript
+// Example 3: Track delegation rewards across multiple validators
+const delegations = await this.helpers.request({
+  method: 'GET',
+  url: '/delegations',
+  params: {
+    wallet_address: credentials.walletAddress
+  }
+});
 
-```json
-{
-  "resource": "utility",
-  "operation": "raoToTao",
-  "amountRao": "1000000000"
+let totalRewards = 0;
+for (const delegation of delegations) {
+  const rewards = await this.helpers.request({
+    method: 'GET',
+    url: `/delegations/${delegation.id}/rewards`,
+    params: {
+      period: '30d'
+    }
+  });
+  totalRewards += rewards.total_rewards;
 }
+
+console.log(`Total delegation rewards (30 days): ${totalRewards} TAO`);
 ```
 
-## Bittensor Concepts
+```javascript
+// Example 4: Network health monitoring
+const networkStats = await this.helpers.request({
+  method: 'GET',
+  url: '/network/stats'
+});
 
-| Term | Description |
-|------|-------------|
-| **TAO** | Native token of Bittensor network |
-| **RAO** | Smallest unit (1 TAO = 10^9 RAO) |
-| **Coldkey** | Main wallet key that holds TAO |
-| **Hotkey** | Operational key for running neurons |
-| **Subnet** | Specialized AI network (netuid) |
-| **Neuron** | Miner or validator on a subnet |
-| **Metagraph** | Network state snapshot |
-| **Axon** | Miner's queryable endpoint |
-| **Tempo** | Epoch length for subnet |
-| **Emission** | TAO rewards distribution |
+const alertThresholds = {
+  minValidators: 1000,
+  maxBlockTime: 12,
+  minNetworkStake: 100000
+};
 
-## Networks
+if (networkStats.active_validators < alertThresholds.minValidators) {
+  // Trigger alert workflow
+  this.emit('low-validator-count', networkStats);
+}
 
-| Network | WebSocket Endpoint |
-|---------|-------------------|
-| Finney (Mainnet) | wss://entrypoint-finney.opentensor.ai:443 |
-| Testnet | wss://test.finney.opentensor.ai:443 |
-| Local | ws://127.0.0.1:9944 |
+if (networkStats.avg_block_time > alertThresholds.maxBlockTime) {
+  // Trigger slow network alert
+  this.emit('slow-network', networkStats);
+}
+```
 
 ## Error Handling
 
-The node provides descriptive error messages for common issues:
-
-- **Connection Errors** - Network unreachable or invalid endpoint
-- **Authentication Errors** - Invalid mnemonic or missing keys
-- **Validation Errors** - Invalid addresses or parameters
-- **Transaction Errors** - Insufficient balance or failed transactions
-
-## Security Best Practices
-
-1. **Never share mnemonics** - Keep coldkey and hotkey mnemonics secure
-2. **Use read-only mode** - For queries that don't require signing
-3. **Test on testnet first** - Verify workflows before mainnet
-4. **Validate addresses** - Always validate before transfers
-5. **Check registration costs** - Verify burn amounts before registering
+| Error | Description | Solution |
+|-------|-------------|----------|
+| 401 Unauthorized | Invalid or missing API key | Verify API key in credentials setup |
+| 403 Insufficient Funds | Not enough TAO for staking operation | Check wallet balance and reduce stake amount |
+| 404 Validator Not Found | Invalid validator address provided | Verify validator address exists on network |
+| 429 Rate Limit Exceeded | Too many API requests in time window | Implement request throttling or increase delays |
+| 500 Network Error | Bittensor network connectivity issues | Check network status and retry operation |
+| 503 Node Unavailable | RPC node temporarily unavailable | Switch to backup RPC endpoint or retry later |
 
 ## Development
 
-### Prerequisites
-
-- Node.js 18+
-- npm or pnpm
-- n8n installed locally
-
-### Setup
-
 ```bash
-# Clone the repository
-git clone https://github.com/Velocity-BPA/n8n-nodes-bittensor.git
-cd n8n-nodes-bittensor
-
-# Install dependencies
 npm install
-
-# Build the project
 npm run build
-
-# Watch for changes
-npm run dev
-
-# Lint code
-npm run lint
-
-# Run tests
 npm test
-```
-
-### Project Structure
-
-```
-n8n-nodes-bittensor/
-├── credentials/              # Credential types
-├── nodes/Bittensor/          # Main node
-│   ├── constants/            # Network configs, subnets
-│   ├── transport/            # API clients
-│   └── utils/                # Helpers
-├── test/                     # Test files
-├── scripts/                  # Build scripts
-└── package.json
+npm run lint
+npm run dev
 ```
 
 ## Author
 
 **Velocity BPA**
-
 - Website: [velobpa.com](https://velobpa.com)
 - GitHub: [Velocity-BPA](https://github.com/Velocity-BPA)
 
@@ -291,39 +252,24 @@ This n8n community node is licensed under the **Business Source License 1.1**.
 Permitted for personal, educational, research, and internal business use.
 
 ### Commercial Use
-Use of this node within any SaaS, PaaS, hosted platform, managed service,
-or paid automation offering requires a commercial license.
+Use of this node within any SaaS, PaaS, hosted platform, managed service, or paid automation offering requires a commercial license.
 
-For licensing inquiries:
-**licensing@velobpa.com**
+For licensing inquiries: **licensing@velobpa.com**
 
 See [LICENSE](LICENSE), [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md), and [LICENSING_FAQ.md](LICENSING_FAQ.md) for details.
 
 ## Contributing
 
-Contributions are welcome! Please:
+Contributions are welcome! Please ensure:
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests (`npm test`)
-5. Submit a pull request
+1. Code follows existing style conventions
+2. All tests pass (`npm test`)
+3. Linting passes (`npm run lint`)
+4. Documentation is updated for new features
+5. Commit messages are descriptive
 
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/Velocity-BPA/n8n-nodes-bittensor/issues)
-- **Documentation**: [Bittensor Docs](https://docs.bittensor.com)
+- **Bittensor Docs**: [Bittensor Documentation](https://docs.bittensor.com/)
 - **Community**: [Bittensor Discord](https://discord.gg/bittensor)
-
-## Acknowledgments
-
-- [Bittensor](https://bittensor.com) - Decentralized AI Network
-- [n8n](https://n8n.io) - Workflow Automation Platform
-- [Polkadot.js](https://polkadot.js.org) - Substrate/Polkadot API
-- [Taostats](https://taostats.io) - Bittensor Analytics
-
----
-
-<p align="center">
-  Made with ❤️ for the Bittensor Community
-</p>
