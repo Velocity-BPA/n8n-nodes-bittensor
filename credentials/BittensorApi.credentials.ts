@@ -1,12 +1,4 @@
-/*
- * Copyright (c) Velocity BPA, LLC
- * Licensed under the Business Source License 1.1
- * Commercial use requires a separate commercial license.
- * See LICENSE file for details.
- */
-
 import {
-	IAuthenticateGeneric,
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
@@ -14,63 +6,24 @@ import {
 export class BittensorApi implements ICredentialType {
 	name = 'bittensorApi';
 	displayName = 'Bittensor API';
-	documentationUrl = 'https://taostats.io/api';
+	documentationUrl = 'https://docs.bittensor.com/api';
 	properties: INodeProperties[] = [
-		{
-			displayName: 'API Provider',
-			name: 'provider',
-			type: 'options',
-			options: [
-				{
-					name: 'Taostats',
-					value: 'taostats',
-				},
-				{
-					name: 'Bittensor Explorer',
-					value: 'explorer',
-				},
-				{
-					name: 'Custom',
-					value: 'custom',
-				},
-			],
-			default: 'taostats',
-			description: 'The API provider to use',
-		},
 		{
 			displayName: 'API Key',
 			name: 'apiKey',
 			type: 'string',
-			typeOptions: {
-				password: true,
-			},
+			typeOptions: { password: true },
 			default: '',
-			description: 'API key for the selected provider (if required)',
+			required: true,
+			description: 'The API key for authenticating with Bittensor API',
 		},
 		{
-			displayName: 'Custom API URL',
-			name: 'customUrl',
+			displayName: 'API Base URL',
+			name: 'baseUrl',
 			type: 'string',
-			default: '',
-			placeholder: 'https://api.example.com',
-			description: 'Custom API endpoint URL',
-			displayOptions: {
-				show: {
-					provider: ['custom'],
-				},
-			},
-		},
-		{
-			displayName: 'Rate Limit (Requests/Second)',
-			name: 'rateLimit',
-			type: 'number',
-			default: 5,
-			description: 'Maximum requests per second to avoid rate limiting',
+			default: 'https://api.bittensor.com/v1',
+			required: true,
+			description: 'The base URL for the Bittensor API',
 		},
 	];
-
-	authenticate: IAuthenticateGeneric = {
-		type: 'generic',
-		properties: {},
-	};
 }
