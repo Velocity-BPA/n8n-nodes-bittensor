@@ -1,29 +1,28 @@
 {
   "compilerOptions": {
-    "strict": true,
+    "target": "es2019",
     "module": "commonjs",
-    "target": "ES2021",
-    "lib": ["ES2021"],
-    "declaration": true,
-    "skipLibCheck": true,
-    "sourceMap": true,
+    "lib": [
+      "es2019"
+    ],
     "outDir": "./dist",
-    "rootDir": ".",
+    "rootDir": "./",
+    "strict": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "noImplicitAny": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "strictNullChecks": true
+    "declaration": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   },
   "include": [
-    "credentials/**/*.ts",
-    "nodes/**/*.ts"
+    "nodes/**/*",
+    "credentials/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "test"
+    "dist"
   ]
 }
