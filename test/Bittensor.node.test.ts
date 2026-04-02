@@ -67,246 +67,351 @@ describe('Bittensor Node', () => {
   });
 
   // Resource-specific tests
+describe('Subnet Resource', () => {
+  let mockExecuteFunctions: any;
+
+  beforeEach(() => {
+    mockExecuteFunctions = {
+      getNodeParameter: jest.fn(),
+      getCredentials: jest.fn().mockResolvedValue({ 
+        apiKey: 'test-key', 
+        baseUrl: 'https://api.bittensor.com/v1' 
+      }),
+      getInputData: jest.fn().mockReturnValue([{ json: {} }]),
+      getNode: jest.fn().mockReturnValue({ name: 'Test Node' }),
+      continueOnFail: jest.fn().mockReturnValue(false),
+      helpers: { 
+        httpRequest: jest.fn(),
+        requestWithAuthentication: jest.fn() 
+      },
+    };
+  });
+
+  it('should get all subnets successfully', async () => {
+    mockExecuteFunctions.getNodeParameter
+      .mockReturnValueOnce('getAllSubnets')
+      .mockReturnValueOnce(100)
+      .mockReturnValueOnce(0);
+    
+    const mockResponse = { subnets: [{ id: 1, name: 'Test Subnet' }] };
+    mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
+
+    const result = await executeSubnetOperations.call(mockExecuteFunctions, [{ json: {} }]);
+    
+    expect(result).toHaveLength(1);
+    expect(result[0].json).toEqual(mockResponse);
+  });
+
+  it('should get specific subnet successfully', async () => {
+    mockExecuteFunctions.getNodeParameter
+      .mockReturnValueOnce('getSubnet')
+      .mockReturnValueOnce('123');
+    
+    const mockResponse = { id: 123, name: 'Test Subnet' };
+    mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
+
+    const result = await executeSubnetOperations.call(mockExecuteFunctions, [{ json: {} }]);
+    
+    expect(result).toHaveLength(1);
+    expect(result[0].json).toEqual(mockResponse);
+  });
+
+  it('should register to subnet successfully', async () => {
+    mockExecuteFunctions.getNodeParameter
+      .mockReturnValueOnce('registerToSubnet')
+      .mockReturnValueOnce('123')
+      .mockReturnValueOnce('hotkey123')
+      .mockReturnValueOnce('coldkey123');
+    
+    const mockResponse = { success: true, transaction_id: 'tx123' };
+    mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
+
+    const result = await executeSubnetOperations.call(mockExecuteFunctions, [{ json: {} }]);
+    
+    expect(result).toHaveLength(1);
+    expect(result[0].json).toEqual(mockResponse);
+  });
+
+  it('should handle API errors gracefully', async () => {
+    mockExecuteFunctions.getNodeParameter.mockReturnValueOnce('getSubnet');
+    mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(new Error('API Error'));
+    mockExecuteFunctions.continueOnFail.mockReturnValue(true);
+
+    const result = await executeSubnetOperations.call(mockExecuteFunctions, [{ json: {} }]);
+    
+    expect(result).toHaveLength(1);
+    expect(result[0].json.error).toBe('API Error');
+  });
+
+  it('should throw error when operation is unknown', async () => {
+    mockExecuteFunctions.getNodeParameter.mockReturnValueOnce('unknownOperation');
+
+    await expect(
+      executeSubnetOperations.call(mockExecuteFunctions, [{ json: {} }])
+    ).rejects.toThrow('Unknown operation: unknownOperation');
+  });
+});
+
+describe('Validator Resource', () => {
+	let mockExecuteFunctions: any;
+
+	beforeEach(() => {
+		mockExecuteFunctions = {
+			getNodeParameter: jest.fn(),
+			getCredentials: jest.fn().mockResolvedValue({
+				apiKey: 'test-api-key',
+				baseUrl: 'https://api.bittensor.com/v1',
+			}),
+			getInputData: jest.fn().mockReturnValue([{ json: {} }]),
+			getNode: jest.fn().mockReturnValue({ name: 'Test Node' }),
+			continueOnFail: jest.fn().mockReturnValue(false),
+			helpers: {
+				httpRequest: jest.fn(),
+			},
+		};
+	});
+
+	describe('getAllValidators', () => {
+		it('should get all validators successfully', async () => {
+			mockExecuteFunctions.getNodeParameter
+				.mockReturnValueOnce('getAllValidators')
+				.mockReturnValueOnce(50)
+				.mockReturnValueOnce(0)
+				.mockReturnValueOnce(1);
+
+			mockExecuteFunctions.helpers.httpRequest.mockResolvedValueOnce({
+				validators: [{ uid: '1', hotkey: 'test-hotkey' }],
+			});
+
+			const result = await executeValidatorOperations.call(mockExecuteFunctions, [{ json: {} }]);
+
+			expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
+				method: 'GET',
+				url: 'https://api.bittensor.com/v1/validators',
+				qs: {
+					limit: 50,
+					offset: 0,
+					subnet_id: 1,
+				},
+				headers: {
+					Authorization: 'Bearer test-api-key',
+					'Content-Type': 'application/json',
+				},
+				json: true,
+			});
+
+			expect(result).toHaveLength(1);
+			expect(result[0].json).toEqual({
+				validators: [{ uid: '1', hotkey: 'test-hotkey' }],
+			});
+		});
+
+		it('should handle errors when getting all validators', async () => {
+			mockExecuteFunctions.getNodeParameter.mockReturnValueOnce('getAllValidators');
+			mockExecuteFunctions.helpers.httpRequest.mockRejectedValueOnce(new Error('API Error'));
+			mockExecuteFunctions.continueOnFail.mockReturnValueOnce(true);
+
+			const result = await executeValidatorOperations.call(mockExecuteFunctions, [{ json: {} }]);
+
+			expect(result).toHaveLength(1);
+			expect(result[0].json.error).toBe('API Error');
+		});
+	});
+
+	describe('getValidator', () => {
+		it('should get specific validator successfully', async () => {
+			mockExecuteFunctions.getNodeParameter
+				.mockReturnValueOnce('getValidator')
+				.mockReturnValueOnce('validator-123');
+
+			mockExecuteFunctions.helpers.httpRequest.mockResolvedValueOnce({
+				uid: 'validator-123',
+				hotkey: 'test-hotkey',
+				performance: 95.5,
+			});
+
+			const result = await executeValidatorOperations.call(mockExecuteFunctions, [{ json: {} }]);
+
+			expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
+				method: 'GET',
+				url: 'https://api.bittensor.com/v1/validators/validator-123',
+				headers: {
+					Authorization: 'Bearer test-api-key',
+					'Content-Type': 'application/json',
+				},
+				json: true,
+			});
+
+			expect(result[0].json.uid).toBe('validator-123');
+		});
+	});
+
+	describe('createValidator', () => {
+		it('should create validator successfully', async () => {
+			mockExecuteFunctions.getNodeParameter
+				.mockReturnValueOnce('createValidator')
+				.mockReturnValueOnce('hotkey-123')
+				.mockReturnValueOnce('coldkey-456')
+				.mockReturnValueOnce(1);
+
+			mockExecuteFunctions.helpers.httpRequest.mockResolvedValueOnce({
+				success: true,
+				validator_uid: 'new-validator-123',
+			});
+
+			const result = await executeValidatorOperations.call(mockExecuteFunctions, [{ json: {} }]);
+
+			expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
+				method: 'POST',
+				url: 'https://api.bittensor.com/v1/validators',
+				body: {
+					hotkey: 'hotkey-123',
+					coldkey: 'coldkey-456',
+					subnet_id: 1,
+				},
+				headers: {
+					Authorization: 'Bearer test-api-key',
+					'Content-Type': 'application/json',
+				},
+				json: true,
+			});
+
+			expect(result[0].json.success).toBe(true);
+		});
+	});
+
+	describe('updateValidator', () => {
+		it('should update validator successfully', async () => {
+			mockExecuteFunctions.getNodeParameter
+				.mockReturnValueOnce('updateValidator')
+				.mockReturnValueOnce('validator-123')
+				.mockReturnValueOnce('{"setting1": "value1", "setting2": 42}');
+
+			mockExecuteFunctions.helpers.httpRequest.mockResolvedValueOnce({
+				success: true,
+				message: 'Validator updated',
+			});
+
+			const result = await executeValidatorOperations.call(mockExecuteFunctions, [{ json: {} }]);
+
+			expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
+				method: 'PUT',
+				url: 'https://api.bittensor.com/v1/validators/validator-123',
+				body: {
+					config: {
+						setting1: 'value1',
+						setting2: 42,
+					},
+				},
+				headers: {
+					Authorization: 'Bearer test-api-key',
+					'Content-Type': 'application/json',
+				},
+				json: true,
+			});
+
+			expect(result[0].json.success).toBe(true);
+		});
+
+		it('should handle invalid JSON in config', async () => {
+			mockExecuteFunctions.getNodeParameter
+				.mockReturnValueOnce('updateValidator')
+				.mockReturnValueOnce('validator-123')
+				.mockReturnValueOnce('invalid json');
+
+			await expect(
+				executeValidatorOperations.call(mockExecuteFunctions, [{ json: {} }])
+			).rejects.toThrow('Invalid JSON in config');
+		});
+	});
+});
+
 describe('Staking Resource', () => {
   let mockExecuteFunctions: any;
 
   beforeEach(() => {
     mockExecuteFunctions = {
       getNodeParameter: jest.fn(),
-      getCredentials: jest.fn().mockResolvedValue({
-        apiKey: 'test-api-key',
-        baseUrl: 'https://api.bittensor.com/v1',
+      getCredentials: jest.fn().mockResolvedValue({ 
+        apiKey: 'test-key', 
+        baseUrl: 'https://api.bittensor.com/v1' 
       }),
       getInputData: jest.fn().mockReturnValue([{ json: {} }]),
       getNode: jest.fn().mockReturnValue({ name: 'Test Node' }),
       continueOnFail: jest.fn().mockReturnValue(false),
-      helpers: {
+      helpers: { 
         httpRequest: jest.fn(),
-        requestWithAuthentication: jest.fn(),
+        requestWithAuthentication: jest.fn() 
       },
     };
   });
 
-  describe('createStake', () => {
-    it('should create a new stake successfully', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((paramName: string) => {
-        switch (paramName) {
-          case 'operation': return 'createStake';
-          case 'hotkey': return 'test-hotkey';
-          case 'coldkey': return 'test-coldkey';
-          case 'amount': return '100.0';
-          case 'target': return 'test-target';
-          default: return undefined;
-        }
-      });
+  test('getAllStakes should retrieve all stakes', async () => {
+    const mockStakes = [{ id: 'stake1', amount: '100', validator_uid: 'val1' }];
+    mockExecuteFunctions.getNodeParameter
+      .mockReturnValueOnce('getAllStakes')
+      .mockReturnValueOnce('coldkey123')
+      .mockReturnValueOnce(100)
+      .mockReturnValueOnce(0);
+    mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockStakes);
 
-      const mockResponse = { 
-        stake_id: 'stake-123',
-        status: 'created',
-        amount: '100.0'
-      };
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
+    const result = await executeStakingOperations.call(mockExecuteFunctions, [{ json: {} }]);
 
-      const result = await executeStakingOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].json).toEqual(mockResponse);
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'POST',
-        url: 'https://api.bittensor.com/v1/staking/stake',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-          'Content-Type': 'application/json',
-        },
-        body: {
-          hotkey: 'test-hotkey',
-          coldkey: 'test-coldkey',
-          amount: '100.0',
-          target: 'test-target',
-        },
-        json: true,
-      });
+    expect(result[0].json).toEqual(mockStakes);
+    expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
+      method: 'GET',
+      url: 'https://api.bittensor.com/v1/stakes',
+      headers: {
+        'Authorization': 'Bearer test-key',
+        'Content-Type': 'application/json',
+      },
+      qs: {
+        coldkey: 'coldkey123',
+        limit: 100,
+        offset: 0,
+      },
+      json: true,
     });
   });
 
-  describe('getStakes', () => {
-    it('should get stakes for an address successfully', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((paramName: string) => {
-        switch (paramName) {
-          case 'operation': return 'getStakes';
-          case 'address': return 'test-address';
-          default: return undefined;
-        }
-      });
+  test('addStake should create new stake', async () => {
+    const mockStakeResponse = { id: 'stake123', status: 'created' };
+    mockExecuteFunctions.getNodeParameter
+      .mockReturnValueOnce('addStake')
+      .mockReturnValueOnce('validator123')
+      .mockReturnValueOnce('50.5')
+      .mockReturnValueOnce('coldkey123')
+      .mockReturnValueOnce('hotkey123');
+    mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockStakeResponse);
 
-      const mockResponse = {
-        stakes: [
-          { stake_id: 'stake-1', amount: '100.0' },
-          { stake_id: 'stake-2', amount: '200.0' }
-        ]
-      };
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
+    const result = await executeStakingOperations.call(mockExecuteFunctions, [{ json: {} }]);
 
-      const result = await executeStakingOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].json).toEqual(mockResponse);
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'GET',
-        url: 'https://api.bittensor.com/v1/staking/stakes/test-address',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-        },
-        json: true,
-      });
+    expect(result[0].json).toEqual(mockStakeResponse);
+    expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
+      method: 'POST',
+      url: 'https://api.bittensor.com/v1/stakes',
+      headers: {
+        'Authorization': 'Bearer test-key',
+        'Content-Type': 'application/json',
+      },
+      body: {
+        validator_uid: 'validator123',
+        amount: '50.5',
+        coldkey: 'coldkey123',
+        hotkey: 'hotkey123',
+      },
+      json: true,
     });
   });
 
-  describe('getAllStakes', () => {
-    it('should get all stakes with pagination', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((paramName: string) => {
-        switch (paramName) {
-          case 'operation': return 'getAllStakes';
-          case 'limit': return 50;
-          case 'offset': return 10;
-          case 'subnet_id': return 'subnet-1';
-          default: return undefined;
-        }
-      });
+  test('should handle API errors gracefully', async () => {
+    mockExecuteFunctions.getNodeParameter.mockReturnValueOnce('getAllStakes');
+    mockExecuteFunctions.continueOnFail.mockReturnValue(true);
+    mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(new Error('API Error'));
 
-      const mockResponse = {
-        stakes: [],
-        total: 0,
-        limit: 50,
-        offset: 10
-      };
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
+    const result = await executeStakingOperations.call(mockExecuteFunctions, [{ json: {} }]);
 
-      const result = await executeStakingOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].json).toEqual(mockResponse);
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'GET',
-        url: 'https://api.bittensor.com/v1/staking/stakes?limit=50&offset=10&subnet_id=subnet-1',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-        },
-        json: true,
-      });
-    });
-  });
-
-  describe('updateStake', () => {
-    it('should update stake successfully', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((paramName: string) => {
-        switch (paramName) {
-          case 'operation': return 'updateStake';
-          case 'stake_id': return 'stake-123';
-          case 'amount': return '150.0';
-          default: return undefined;
-        }
-      });
-
-      const mockResponse = {
-        stake_id: 'stake-123',
-        status: 'updated',
-        amount: '150.0'
-      };
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-      const result = await executeStakingOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].json).toEqual(mockResponse);
-    });
-  });
-
-  describe('removeStake', () => {
-    it('should remove stake successfully', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((paramName: string) => {
-        switch (paramName) {
-          case 'operation': return 'removeStake';
-          case 'stake_id': return 'stake-123';
-          default: return undefined;
-        }
-      });
-
-      const mockResponse = {
-        stake_id: 'stake-123',
-        status: 'removed'
-      };
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-      const result = await executeStakingOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].json).toEqual(mockResponse);
-    });
-  });
-
-  describe('getStakingRewards', () => {
-    it('should get staking rewards successfully', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((paramName: string) => {
-        switch (paramName) {
-          case 'operation': return 'getStakingRewards';
-          case 'address': return 'test-address';
-          case 'period': return 'daily';
-          default: return undefined;
-        }
-      });
-
-      const mockResponse = {
-        address: 'test-address',
-        period: 'daily',
-        total_rewards: '10.5',
-        rewards: []
-      };
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-      const result = await executeStakingOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].json).toEqual(mockResponse);
-    });
-  });
-
-  describe('error handling', () => {
-    it('should handle API errors', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((paramName: string) => {
-        switch (paramName) {
-          case 'operation': return 'getStakes';
-          case 'address': return 'invalid-address';
-          default: return undefined;
-        }
-      });
-
-      const error = new Error('API Error');
-      mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(error);
-
-      await expect(
-        executeStakingOperations.call(mockExecuteFunctions, [{ json: {} }])
-      ).rejects.toThrow('API Error');
-    });
-
-    it('should continue on fail when enabled', async () => {
-      mockExecuteFunctions.continueOnFail.mockReturnValue(true);
-      mockExecuteFunctions.getNodeParameter.mockImplementation((paramName: string) => {
-        switch (paramName) {
-          case 'operation': return 'getStakes';
-          case 'address': return 'invalid-address';
-          default: return undefined;
-        }
-      });
-
-      const error = new Error('API Error');
-      mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(error);
-
-      const result = await executeStakingOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].json.error).toBe('API Error');
-    });
+    expect(result[0].json.error).toBe('API Error');
   });
 });
 
@@ -317,673 +422,90 @@ describe('Delegation Resource', () => {
     mockExecuteFunctions = {
       getNodeParameter: jest.fn(),
       getCredentials: jest.fn().mockResolvedValue({
-        apiKey: 'test-api-key',
-        baseUrl: 'https://api.bittensor.com/v1',
+        apiKey: 'test-key',
+        baseUrl: 'https://api.bittensor.com/v1'
       }),
       getInputData: jest.fn().mockReturnValue([{ json: {} }]),
       getNode: jest.fn().mockReturnValue({ name: 'Test Node' }),
       continueOnFail: jest.fn().mockReturnValue(false),
       helpers: {
         httpRequest: jest.fn(),
-        requestWithAuthentication: jest.fn(),
+        requestWithAuthentication: jest.fn()
       },
     };
   });
 
-  describe('createDelegation', () => {
-    it('should create delegation successfully', async () => {
-      const mockResponse = {
-        success: true,
-        delegation_id: 'del_123',
-        amount: 100,
-      };
+  it('should get all delegations successfully', async () => {
+    mockExecuteFunctions.getNodeParameter
+      .mockReturnValueOnce('getAllDelegations')
+      .mockReturnValueOnce('5GNJqTPyNqANBkUVMN1LPPrxXnFouWXoe2wNSmmEoLctxiZY')
+      .mockReturnValueOnce(100)
+      .mockReturnValueOnce(0);
 
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-        switch (param) {
-          case 'operation': return 'createDelegation';
-          case 'validatorHotkey': return 'validator_hotkey_123';
-          case 'amount': return 100;
-          case 'coldkey': return 'coldkey_123';
-          default: return undefined;
-        }
-      });
+    mockExecuteFunctions.helpers.httpRequest.mockResolvedValue({ delegations: [] });
 
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-      const result = await executeDelegationOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].json).toEqual(mockResponse);
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'POST',
-        url: 'https://api.bittensor.com/v1/delegation/delegate',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-          'Content-Type': 'application/json',
-        },
-        body: {
-          validator_hotkey: 'validator_hotkey_123',
-          amount: 100,
-          coldkey: 'coldkey_123',
-        },
-        json: true,
-      });
-    });
-
-    it('should handle createDelegation error', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-        switch (param) {
-          case 'operation': return 'createDelegation';
-          default: return undefined;
-        }
-      });
-
-      mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(new Error('API Error'));
-      mockExecuteFunctions.continueOnFail.mockReturnValue(true);
-
-      const result = await executeDelegationOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].json.error).toBe('API Error');
-    });
-  });
-
-  describe('getDelegations', () => {
-    it('should get delegations for address successfully', async () => {
-      const mockResponse = {
-        delegations: [
-          { id: 'del_1', amount: 100, validator: 'val_1' },
-          { id: 'del_2', amount: 200, validator: 'val_2' },
-        ],
-      };
-
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-        switch (param) {
-          case 'operation': return 'getDelegations';
-          case 'address': return 'test_address_123';
-          default: return undefined;
-        }
-      });
-
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-      const result = await executeDelegationOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].json).toEqual(mockResponse);
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'GET',
-        url: 'https://api.bittensor.com/v1/delegation/delegations/test_address_123',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-        },
-        json: true,
-      });
-    });
-  });
-
-  describe('getAllDelegations', () => {
-    it('should get all delegations with filters', async () => {
-      const mockResponse = {
-        delegations: [],
-        total: 0,
-      };
-
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-        switch (param) {
-          case 'operation': return 'getAllDelegations';
-          case 'validatorHotkey': return 'validator_123';
-          case 'limit': return 50;
-          case 'offset': return 10;
-          default: return undefined;
-        }
-      });
-
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-      const result = await executeDelegationOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].json).toEqual(mockResponse);
-    });
-  });
-
-  describe('updateDelegation', () => {
-    it('should update delegation successfully', async () => {
-      const mockResponse = {
-        success: true,
-        delegation_id: 'del_123',
-        new_amount: 150,
-      };
-
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-        switch (param) {
-          case 'operation': return 'updateDelegation';
-          case 'delegationId': return 'del_123';
-          case 'amount': return 150;
-          default: return undefined;
-        }
-      });
-
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-      const result = await executeDelegationOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].json).toEqual(mockResponse);
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'PUT',
-        url: 'https://api.bittensor.com/v1/delegation/delegations/del_123',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-          'Content-Type': 'application/json',
-        },
-        body: {
-          amount: 150,
-        },
-        json: true,
-      });
-    });
-  });
-
-  describe('removeDelegation', () => {
-    it('should remove delegation successfully', async () => {
-      const mockResponse = {
-        success: true,
-        message: 'Delegation removed',
-      };
-
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-        switch (param) {
-          case 'operation': return 'removeDelegation';
-          case 'delegationId': return 'del_123';
-          default: return undefined;
-        }
-      });
-
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-      const result = await executeDelegationOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].json).toEqual(mockResponse);
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'DELETE',
-        url: 'https://api.bittensor.com/v1/delegation/delegations/del_123',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-        },
-        json: true,
-      });
-    });
-  });
-
-  describe('getValidators', () => {
-    it('should get validators with filters', async () => {
-      const mockResponse = {
-        validators: [
-          { hotkey: 'val_1', stake: 1000, subnet_id: 1 },
-          { hotkey: 'val_2', stake: 2000, subnet_id: 1 },
-        ],
-      };
-
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-        switch (param) {
-          case 'operation': return 'getValidators';
-          case 'subnetId': return 1;
-          case 'minStake': return 500;
-          default: return undefined;
-        }
-      });
-
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-      const result = await executeDelegationOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toHaveLength(1);
-      expect(result[0].json).toEqual(mockResponse);
-    });
-  });
-});
-
-describe('Subnets Resource', () => {
-  let mockExecuteFunctions: any;
-
-  beforeEach(() => {
-    mockExecuteFunctions = {
-      getNodeParameter: jest.fn(),
-      getCredentials: jest.fn().mockResolvedValue({
-        apiKey: 'test-api-key',
-        baseUrl: 'https://api.bittensor.com/v1',
-      }),
-      getInputData: jest.fn().mockReturnValue([{ json: {} }]),
-      getNode: jest.fn().mockReturnValue({ name: 'Test Node' }),
-      continueOnFail: jest.fn().mockReturnValue(false),
-      helpers: {
-        httpRequest: jest.fn(),
-        requestWithAuthentication: jest.fn(),
+    const result = await executeDelegationOperations.call(mockExecuteFunctions, [{ json: {} }]);
+    expect(result).toHaveLength(1);
+    expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
+      method: 'GET',
+      url: 'https://api.bittensor.com/v1/delegations',
+      headers: {
+        'Authorization': 'Bearer test-key',
+        'Content-Type': 'application/json',
       },
-    };
+      qs: {
+        coldkey: '5GNJqTPyNqANBkUVMN1LPPrxXnFouWXoe2wNSmmEoLctxiZY',
+        limit: 100,
+        offset: 0,
+      },
+      json: true,
+    });
   });
 
-  test('should register subnet successfully', async () => {
-    const mockResponse = {
-      success: true,
-      netuid: 123,
-      message: 'Subnet registered successfully',
-    };
+  it('should create delegation successfully', async () => {
+    mockExecuteFunctions.getNodeParameter
+      .mockReturnValueOnce('createDelegation')
+      .mockReturnValueOnce('123')
+      .mockReturnValueOnce('10.5')
+      .mockReturnValueOnce('5GNJqTPyNqANBkUVMN1LPPrxXnFouWXoe2wNSmmEoLctxiZY');
 
-    mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-      switch (param) {
-        case 'operation': return 'registerSubnet';
-        case 'name': return 'Test Subnet';
-        case 'netuid': return 123;
-        case 'coldkey': return 'test-coldkey';
-        case 'hotkey': return 'test-hotkey';
-        default: return undefined;
-      }
-    });
+    mockExecuteFunctions.helpers.httpRequest.mockResolvedValue({ success: true });
 
-    mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-    const result = await executeSubnetsOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-    expect(result).toEqual([{ json: mockResponse, pairedItem: { item: 0 } }]);
+    const result = await executeDelegationOperations.call(mockExecuteFunctions, [{ json: {} }]);
+    expect(result).toHaveLength(1);
     expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
       method: 'POST',
-      url: 'https://api.bittensor.com/v1/subnets/register',
+      url: 'https://api.bittensor.com/v1/delegations',
       headers: {
-        'Authorization': 'Bearer test-api-key',
+        'Authorization': 'Bearer test-key',
         'Content-Type': 'application/json',
       },
       body: {
-        name: 'Test Subnet',
-        netuid: 123,
-        coldkey: 'test-coldkey',
-        hotkey: 'test-hotkey',
+        validator_uid: '123',
+        amount: '10.5',
+        coldkey: '5GNJqTPyNqANBkUVMN1LPPrxXnFouWXoe2wNSmmEoLctxiZY',
       },
       json: true,
     });
   });
 
-  test('should get subnet details successfully', async () => {
-    const mockResponse = {
-      netuid: 123,
-      name: 'Test Subnet',
-      neurons: 50,
-      active: true,
-    };
+  it('should handle errors gracefully when continueOnFail is true', async () => {
+    mockExecuteFunctions.getNodeParameter.mockReturnValue('getAllDelegations');
+    mockExecuteFunctions.continueOnFail.mockReturnValue(true);
+    mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(new Error('API Error'));
 
-    mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-      switch (param) {
-        case 'operation': return 'getSubnet';
-        case 'netuid': return 123;
-        default: return undefined;
-      }
-    });
-
-    mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-    const result = await executeSubnetsOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-    expect(result).toEqual([{ json: mockResponse, pairedItem: { item: 0 } }]);
-    expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-      method: 'GET',
-      url: 'https://api.bittensor.com/v1/subnets/123',
-      headers: {
-        'Authorization': 'Bearer test-api-key',
-      },
-      json: true,
-    });
+    const result = await executeDelegationOperations.call(mockExecuteFunctions, [{ json: {} }]);
+    expect(result).toHaveLength(1);
+    expect(result[0].json.error).toBe('API Error');
   });
 
-  test('should get all subnets successfully', async () => {
-    const mockResponse = {
-      subnets: [
-        { netuid: 1, name: 'Subnet 1' },
-        { netuid: 2, name: 'Subnet 2' },
-      ],
-      total: 2,
-    };
+  it('should throw error when continueOnFail is false', async () => {
+    mockExecuteFunctions.getNodeParameter.mockReturnValue('getAllDelegations');
+    mockExecuteFunctions.continueOnFail.mockReturnValue(false);
+    mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(new Error('API Error'));
 
-    mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-      switch (param) {
-        case 'operation': return 'getAllSubnets';
-        case 'activeOnly': return true;
-        case 'limit': return 100;
-        case 'offset': return 0;
-        default: return undefined;
-      }
-    });
-
-    mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-    const result = await executeSubnetsOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-    expect(result).toEqual([{ json: mockResponse, pairedItem: { item: 0 } }]);
-    expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-      method: 'GET',
-      url: 'https://api.bittensor.com/v1/subnets?active_only=true&limit=100&offset=0',
-      headers: {
-        'Authorization': 'Bearer test-api-key',
-      },
-      json: true,
-    });
-  });
-
-  test('should update subnet successfully', async () => {
-    const mockResponse = {
-      success: true,
-      message: 'Subnet updated successfully',
-    };
-
-    mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-      switch (param) {
-        case 'operation': return 'updateSubnet';
-        case 'netuid': return 123;
-        case 'config': return '{"max_neurons": 100}';
-        default: return undefined;
-      }
-    });
-
-    mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-    const result = await executeSubnetsOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-    expect(result).toEqual([{ json: mockResponse, pairedItem: { item: 0 } }]);
-    expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-      method: 'PUT',
-      url: 'https://api.bittensor.com/v1/subnets/123',
-      headers: {
-        'Authorization': 'Bearer test-api-key',
-        'Content-Type': 'application/json',
-      },
-      body: {
-        config: { max_neurons: 100 },
-      },
-      json: true,
-    });
-  });
-
-  test('should get subnet neurons successfully', async () => {
-    const mockResponse = {
-      neurons: [
-        { uid: 1, hotkey: 'hotkey1' },
-        { uid: 2, hotkey: 'hotkey2' },
-      ],
-      total: 2,
-    };
-
-    mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-      switch (param) {
-        case 'operation': return 'getSubnetNeurons';
-        case 'netuid': return 123;
-        case 'limit': return 50;
-        case 'offset': return 10;
-        default: return undefined;
-      }
-    });
-
-    mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-    const result = await executeSubnetsOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-    expect(result).toEqual([{ json: mockResponse, pairedItem: { item: 0 } }]);
-    expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-      method: 'GET',
-      url: 'https://api.bittensor.com/v1/subnets/123/neurons?limit=50&offset=10',
-      headers: {
-        'Authorization': 'Bearer test-api-key',
-      },
-      json: true,
-    });
-  });
-
-  test('should get subnet metagraph successfully', async () => {
-    const mockResponse = {
-      netuid: 123,
-      metagraph: {
-        nodes: 50,
-        edges: 100,
-        weights: [],
-      },
-    };
-
-    mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-      switch (param) {
-        case 'operation': return 'getSubnetMetagraph';
-        case 'netuid': return 123;
-        default: return undefined;
-      }
-    });
-
-    mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-    const result = await executeSubnetsOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-    expect(result).toEqual([{ json: mockResponse, pairedItem: { item: 0 } }]);
-    expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-      method: 'GET',
-      url: 'https://api.bittensor.com/v1/subnets/123/metagraph',
-      headers: {
-        'Authorization': 'Bearer test-api-key',
-      },
-      json: true,
-    });
-  });
-
-  test('should handle API errors', async () => {
-    const mockError = new Error('API Error');
-    mockError.httpCode = 400;
-
-    mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-      switch (param) {
-        case 'operation': return 'getSubnet';
-        case 'netuid': return 123;
-        default: return undefined;
-      }
-    });
-
-    mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(mockError);
-
-    await expect(executeSubnetsOperations.call(mockExecuteFunctions, [{ json: {} }])).rejects.toThrow();
-  });
-
-  test('should handle invalid JSON configuration', async () => {
-    mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-      switch (param) {
-        case 'operation': return 'updateSubnet';
-        case 'netuid': return 123;
-        case 'config': return 'invalid-json';
-        default: return undefined;
-      }
-    });
-
-    await expect(executeSubnetsOperations.call(mockExecuteFunctions, [{ json: {} }])).rejects.toThrow();
-  });
-});
-
-describe('Validators Resource', () => {
-  let mockExecuteFunctions: any;
-
-  beforeEach(() => {
-    mockExecuteFunctions = {
-      getNodeParameter: jest.fn(),
-      getCredentials: jest.fn().mockResolvedValue({
-        apiKey: 'test-api-key',
-        baseUrl: 'https://api.bittensor.com/v1',
-      }),
-      getInputData: jest.fn().mockReturnValue([{ json: {} }]),
-      getNode: jest.fn().mockReturnValue({ name: 'Test Node' }),
-      continueOnFail: jest.fn().mockReturnValue(false),
-      helpers: {
-        httpRequest: jest.fn(),
-        requestWithAuthentication: jest.fn(),
-      },
-    };
-  });
-
-  describe('registerValidator', () => {
-    it('should register validator successfully', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-        switch (param) {
-          case 'operation': return 'registerValidator';
-          case 'hotkey': return 'test-hotkey';
-          case 'coldkey': return 'test-coldkey';
-          case 'subnet_id': return 1;
-          default: return undefined;
-        }
-      });
-
-      const mockResponse = { success: true, validator_id: 'validator-123' };
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-      const result = await executeValidatorsOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'POST',
-        url: 'https://api.bittensor.com/v1/validators/register',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-          'Content-Type': 'application/json',
-        },
-        body: {
-          hotkey: 'test-hotkey',
-          coldkey: 'test-coldkey',
-          subnet_id: 1,
-        },
-        json: true,
-      });
-
-      expect(result).toEqual([{ json: mockResponse, pairedItem: { item: 0 } }]);
-    });
-  });
-
-  describe('getValidator', () => {
-    it('should get validator details successfully', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-        switch (param) {
-          case 'operation': return 'getValidator';
-          case 'hotkey': return 'test-hotkey';
-          default: return undefined;
-        }
-      });
-
-      const mockResponse = { hotkey: 'test-hotkey', stake: 1000, active: true };
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-      const result = await executeValidatorsOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'GET',
-        url: 'https://api.bittensor.com/v1/validators/test-hotkey',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-        },
-        json: true,
-      });
-
-      expect(result).toEqual([{ json: mockResponse, pairedItem: { item: 0 } }]);
-    });
-  });
-
-  describe('getAllValidators', () => {
-    it('should get all validators with filters successfully', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string, index: number, defaultValue?: any) => {
-        switch (param) {
-          case 'operation': return 'getAllValidators';
-          case 'subnet_id': return defaultValue !== undefined ? defaultValue : 1;
-          case 'active_only': return defaultValue !== undefined ? defaultValue : true;
-          case 'limit': return defaultValue !== undefined ? defaultValue : 50;
-          case 'offset': return defaultValue !== undefined ? defaultValue : 0;
-          default: return defaultValue;
-        }
-      });
-
-      const mockResponse = { validators: [], total: 0 };
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-      const result = await executeValidatorsOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'GET',
-        url: 'https://api.bittensor.com/v1/validators?subnet_id=1&active_only=true&limit=50&offset=0',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-        },
-        json: true,
-      });
-
-      expect(result).toEqual([{ json: mockResponse, pairedItem: { item: 0 } }]);
-    });
-  });
-
-  describe('setWeights', () => {
-    it('should set validator weights successfully', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string, index: number, defaultValue?: any) => {
-        switch (param) {
-          case 'operation': return 'setWeights';
-          case 'hotkey': return 'test-hotkey';
-          case 'weights': return '{"node1": 0.5, "node2": 0.3}';
-          case 'version_key': return defaultValue !== undefined ? defaultValue : 'v1.0';
-          default: return defaultValue;
-        }
-      });
-
-      const mockResponse = { success: true };
-      mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
-
-      const result = await executeValidatorsOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'POST',
-        url: 'https://api.bittensor.com/v1/validators/test-hotkey/weights',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-          'Content-Type': 'application/json',
-        },
-        body: {
-          weights: { node1: 0.5, node2: 0.3 },
-          version_key: 'v1.0',
-        },
-        json: true,
-      });
-
-      expect(result).toEqual([{ json: mockResponse, pairedItem: { item: 0 } }]);
-    });
-
-    it('should handle invalid JSON weights', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-        switch (param) {
-          case 'operation': return 'setWeights';
-          case 'hotkey': return 'test-hotkey';
-          case 'weights': return 'invalid-json';
-          default: return '';
-        }
-      });
-
-      await expect(executeValidatorsOperations.call(mockExecuteFunctions, [{ json: {} }]))
-        .rejects.toThrow('Invalid weights JSON');
-    });
-  });
-
-  describe('error handling', () => {
-    it('should handle API errors when continueOnFail is true', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-        switch (param) {
-          case 'operation': return 'getValidator';
-          case 'hotkey': return 'test-hotkey';
-          default: return undefined;
-        }
-      });
-
-      mockExecuteFunctions.continueOnFail.mockReturnValue(true);
-      mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(new Error('API Error'));
-
-      const result = await executeValidatorsOperations.call(mockExecuteFunctions, [{ json: {} }]);
-
-      expect(result).toEqual([{ json: { error: 'API Error' }, pairedItem: { item: 0 } }]);
-    });
+    await expect(executeDelegationOperations.call(mockExecuteFunctions, [{ json: {} }]))
+      .rejects.toThrow('API Error');
   });
 });
 
@@ -995,217 +517,162 @@ describe('Network Resource', () => {
       getNodeParameter: jest.fn(),
       getCredentials: jest.fn().mockResolvedValue({
         apiKey: 'test-api-key',
-        baseUrl: 'https://api.bittensor.com/v1',
+        baseUrl: 'https://api.bittensor.com/v1'
       }),
       getInputData: jest.fn().mockReturnValue([{ json: {} }]),
-      getNode: jest.fn().mockReturnValue({ name: 'Test Node' }),
+      getNode: jest.fn().mockReturnValue({ name: 'Test Bittensor Node' }),
       continueOnFail: jest.fn().mockReturnValue(false),
       helpers: {
         httpRequest: jest.fn(),
-        requestWithAuthentication: jest.fn(),
       },
     };
   });
 
-  describe('getNetworkStats', () => {
-    it('should get network statistics successfully', async () => {
-      const mockResponse = {
-        total_subnets: 32,
-        active_validators: 256,
-        total_stake: '1000000000',
-        network_hash_rate: '123456789',
-      };
-
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-        if (param === 'operation') return 'getNetworkStats';
-        return undefined;
-      });
+  describe('getNetworkStats operation', () => {
+    it('should successfully get network statistics', async () => {
+      const mockResponse = { totalNodes: 100, activeValidators: 80, networkHashrate: '1000 TH/s' };
+      mockExecuteFunctions.getNodeParameter.mockReturnValue('getNetworkStats');
       mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
 
       const result = await executeNetworkOperations.call(mockExecuteFunctions, [{ json: {} }]);
 
       expect(result).toHaveLength(1);
       expect(result[0].json).toEqual(mockResponse);
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'GET',
-        url: 'https://api.bittensor.com/v1/network/stats',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-          'Content-Type': 'application/json',
-        },
-        json: true,
-      });
     });
 
     it('should handle network stats error', async () => {
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string) => {
-        if (param === 'operation') return 'getNetworkStats';
-        return undefined;
-      });
+      mockExecuteFunctions.getNodeParameter.mockReturnValue('getNetworkStats');
       mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(new Error('Network error'));
+      mockExecuteFunctions.continueOnFail.mockReturnValue(true);
 
-      await expect(
-        executeNetworkOperations.call(mockExecuteFunctions, [{ json: {} }])
-      ).rejects.toThrow('Network error');
+      const result = await executeNetworkOperations.call(mockExecuteFunctions, [{ json: {} }]);
+
+      expect(result[0].json.error).toBe('Network error');
     });
   });
 
-  describe('getBlock', () => {
-    it('should get block information successfully', async () => {
-      const mockResponse = {
-        block_number: 12345,
-        block_hash: '0x123abc',
-        timestamp: '2023-01-01T00:00:00Z',
-        transactions: [],
-      };
-
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string, index: number) => {
-        if (param === 'operation') return 'getBlock';
-        if (param === 'blockNumber') return 12345;
-        return undefined;
-      });
+  describe('getBlocks operation', () => {
+    it('should successfully get blocks with limit and offset', async () => {
+      const mockResponse = { blocks: [{ number: 100, hash: 'abc123' }] };
+      mockExecuteFunctions.getNodeParameter
+        .mockReturnValueOnce('getBlocks')
+        .mockReturnValueOnce(10)
+        .mockReturnValueOnce(0);
       mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
 
       const result = await executeNetworkOperations.call(mockExecuteFunctions, [{ json: {} }]);
 
       expect(result).toHaveLength(1);
       expect(result[0].json).toEqual(mockResponse);
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'GET',
-        url: 'https://api.bittensor.com/v1/network/blocks/12345',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-          'Content-Type': 'application/json',
-        },
-        json: true,
-      });
+    });
+
+    it('should handle blocks retrieval error', async () => {
+      mockExecuteFunctions.getNodeParameter
+        .mockReturnValueOnce('getBlocks')
+        .mockReturnValueOnce(10)
+        .mockReturnValueOnce(0);
+      mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(new Error('Blocks error'));
+      mockExecuteFunctions.continueOnFail.mockReturnValue(true);
+
+      const result = await executeNetworkOperations.call(mockExecuteFunctions, [{ json: {} }]);
+
+      expect(result[0].json.error).toBe('Blocks error');
     });
   });
 
-  describe('getAllBlocks', () => {
-    it('should get all blocks successfully', async () => {
-      const mockResponse = {
-        blocks: [
-          { block_number: 12345, block_hash: '0x123abc' },
-          { block_number: 12344, block_hash: '0x456def' },
-        ],
-        total: 2,
-      };
-
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string, index: number) => {
-        if (param === 'operation') return 'getAllBlocks';
-        if (param === 'limit') return 10;
-        if (param === 'offset') return 0;
-        return undefined;
-      });
+  describe('getBlock operation', () => {
+    it('should successfully get specific block', async () => {
+      const mockResponse = { number: 100, hash: 'abc123', transactions: [] };
+      mockExecuteFunctions.getNodeParameter
+        .mockReturnValueOnce('getBlock')
+        .mockReturnValueOnce(100);
       mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
 
       const result = await executeNetworkOperations.call(mockExecuteFunctions, [{ json: {} }]);
 
       expect(result).toHaveLength(1);
       expect(result[0].json).toEqual(mockResponse);
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'GET',
-        url: 'https://api.bittensor.com/v1/network/blocks?limit=10&offset=0',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-          'Content-Type': 'application/json',
-        },
-        json: true,
-      });
+    });
+
+    it('should handle block retrieval error', async () => {
+      mockExecuteFunctions.getNodeParameter
+        .mockReturnValueOnce('getBlock')
+        .mockReturnValueOnce(100);
+      mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(new Error('Block not found'));
+      mockExecuteFunctions.continueOnFail.mockReturnValue(true);
+
+      const result = await executeNetworkOperations.call(mockExecuteFunctions, [{ json: {} }]);
+
+      expect(result[0].json.error).toBe('Block not found');
     });
   });
 
-  describe('getDifficulty', () => {
-    it('should get network difficulty successfully', async () => {
-      const mockResponse = {
-        netuid: 1,
-        difficulty: 123456789,
-        adjustment_interval: 100,
-      };
-
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string, index: number) => {
-        if (param === 'operation') return 'getDifficulty';
-        if (param === 'netuid') return 1;
-        return undefined;
-      });
+  describe('getDifficulty operation', () => {
+    it('should successfully get network difficulty', async () => {
+      const mockResponse = { difficulty: '1000000', adjustmentTime: '2024-01-01T00:00:00Z' };
+      mockExecuteFunctions.getNodeParameter.mockReturnValue('getDifficulty');
       mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
 
       const result = await executeNetworkOperations.call(mockExecuteFunctions, [{ json: {} }]);
 
       expect(result).toHaveLength(1);
       expect(result[0].json).toEqual(mockResponse);
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'GET',
-        url: 'https://api.bittensor.com/v1/network/difficulty?netuid=1',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-          'Content-Type': 'application/json',
-        },
-        json: true,
-      });
+    });
+
+    it('should handle difficulty retrieval error', async () => {
+      mockExecuteFunctions.getNodeParameter.mockReturnValue('getDifficulty');
+      mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(new Error('Difficulty error'));
+      mockExecuteFunctions.continueOnFail.mockReturnValue(true);
+
+      const result = await executeNetworkOperations.call(mockExecuteFunctions, [{ json: {} }]);
+
+      expect(result[0].json.error).toBe('Difficulty error');
     });
   });
 
-  describe('getConsensus', () => {
-    it('should get consensus information successfully', async () => {
-      const mockResponse = {
-        netuid: 1,
-        consensus: [0.8, 0.9, 0.7],
-        validator_count: 64,
-      };
-
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string, index: number) => {
-        if (param === 'operation') return 'getConsensus';
-        if (param === 'netuid') return 1;
-        return undefined;
-      });
+  describe('getTotalIssuance operation', () => {
+    it('should successfully get total issuance', async () => {
+      const mockResponse = { totalIssuance: '1000000 TAO', lastUpdate: '2024-01-01T00:00:00Z' };
+      mockExecuteFunctions.getNodeParameter.mockReturnValue('getTotalIssuance');
       mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
 
       const result = await executeNetworkOperations.call(mockExecuteFunctions, [{ json: {} }]);
 
       expect(result).toHaveLength(1);
       expect(result[0].json).toEqual(mockResponse);
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'GET',
-        url: 'https://api.bittensor.com/v1/network/consensus?netuid=1',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-          'Content-Type': 'application/json',
-        },
-        json: true,
-      });
+    });
+
+    it('should handle total issuance error', async () => {
+      mockExecuteFunctions.getNodeParameter.mockReturnValue('getTotalIssuance');
+      mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(new Error('Issuance error'));
+      mockExecuteFunctions.continueOnFail.mockReturnValue(true);
+
+      const result = await executeNetworkOperations.call(mockExecuteFunctions, [{ json: {} }]);
+
+      expect(result[0].json.error).toBe('Issuance error');
     });
   });
 
-  describe('getEmission', () => {
-    it('should get emission rates successfully', async () => {
-      const mockResponse = {
-        netuid: 1,
-        emission_rate: '1000000',
-        total_emission: '500000000',
-      };
-
-      mockExecuteFunctions.getNodeParameter.mockImplementation((param: string, index: number) => {
-        if (param === 'operation') return 'getEmission';
-        if (param === 'netuid') return 1;
-        return undefined;
-      });
+  describe('getTempo operation', () => {
+    it('should successfully get tempo information', async () => {
+      const mockResponse = { tempo: 100, blockTime: '12s', epochLength: 360 };
+      mockExecuteFunctions.getNodeParameter.mockReturnValue('getTempo');
       mockExecuteFunctions.helpers.httpRequest.mockResolvedValue(mockResponse);
 
       const result = await executeNetworkOperations.call(mockExecuteFunctions, [{ json: {} }]);
 
       expect(result).toHaveLength(1);
       expect(result[0].json).toEqual(mockResponse);
-      expect(mockExecuteFunctions.helpers.httpRequest).toHaveBeenCalledWith({
-        method: 'GET',
-        url: 'https://api.bittensor.com/v1/network/emission?netuid=1',
-        headers: {
-          'Authorization': 'Bearer test-api-key',
-          'Content-Type': 'application/json',
-        },
-        json: true,
-      });
+    });
+
+    it('should handle tempo retrieval error', async () => {
+      mockExecuteFunctions.getNodeParameter.mockReturnValue('getTempo');
+      mockExecuteFunctions.helpers.httpRequest.mockRejectedValue(new Error('Tempo error'));
+      mockExecuteFunctions.continueOnFail.mockReturnValue(true);
+
+      const result = await executeNetworkOperations.call(mockExecuteFunctions, [{ json: {} }]);
+
+      expect(result[0].json.error).toBe('Tempo error');
     });
   });
 });
