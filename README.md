@@ -8,25 +8,25 @@
 >
 > For licensing information, visit https://velobpa.com/licensing or contact licensing@velobpa.com.
 
-A comprehensive n8n community node for interacting with the Bittensor decentralized AI network. This node provides 5 core resources enabling automation of staking operations, delegation management, subnet monitoring, validator tracking, and network analytics within your n8n workflows.
+An n8n community node for integrating with the Bittensor decentralized AI network. This node provides access to 5 core resources including subnet management, validator operations, staking mechanisms, delegation processes, and network monitoring capabilities for building automated workflows with the Bittensor ecosystem.
 
 ![n8n Community Node](https://img.shields.io/badge/n8n-Community%20Node-blue)
 ![License](https://img.shields.io/badge/license-BSL--1.1-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue)
-![Bittensor](https://img.shields.io/badge/Bittensor-Compatible-green)
-![TAO](https://img.shields.io/badge/TAO-Supported-orange)
-![Subtensor](https://img.shields.io/badge/Subtensor-Ready-purple)
+![Bittensor](https://img.shields.io/badge/Bittensor-Network-orange)
+![AI](https://img.shields.io/badge/AI-Decentralized-green)
+![Blockchain](https://img.shields.io/badge/Blockchain-TAO-purple)
 
 ## Features
 
-- **Staking Operations** - Automate TAO staking, unstaking, and stake management across validators
-- **Delegation Management** - Monitor and manage delegate performance, rewards, and nominations
-- **Subnet Analytics** - Track subnet metrics, registration costs, and performance data
-- **Validator Monitoring** - Real-time validator statistics, rankings, and emission tracking
-- **Network Insights** - Access network-wide statistics, block data, and consensus metrics
-- **Multi-Network Support** - Compatible with mainnet, testnet, and custom Bittensor networks
-- **Real-time Data** - Live blockchain data with configurable refresh intervals
-- **Automated Alerts** - Set up notifications for stake changes, validator events, and network updates
+- **Subnet Management** - Create, monitor, and manage Bittensor subnets with automated workflows
+- **Validator Operations** - Register, query, and manage validator nodes across the network
+- **Staking Integration** - Automate staking operations and monitor staking rewards
+- **Delegation Control** - Manage stake delegation to validators with automated rebalancing
+- **Network Monitoring** - Track network metrics, subnet performance, and validator statistics
+- **Real-time Data** - Access live network data for informed decision making
+- **Batch Operations** - Perform bulk operations across multiple subnets and validators
+- **Error Recovery** - Built-in retry mechanisms and error handling for network operations
 
 ## Installation
 
@@ -61,159 +61,106 @@ n8n start
 
 | Field | Description | Required |
 |-------|-------------|----------|
-| API Key | Your Bittensor API key for authenticated requests | Yes |
-| Network | Target network (mainnet, testnet, custom) | Yes |
-| RPC Endpoint | Custom RPC endpoint URL (if using custom network) | No |
-| Wallet Address | Your wallet address for stake operations | No |
+| API Key | Your Bittensor network API key for authentication | Yes |
+| Network | Target network (mainnet/testnet) | Yes |
+| Endpoint | Custom endpoint URL (optional) | No |
 
 ## Resources & Operations
 
-### 1. Staking
+### 1. Subnet
 
 | Operation | Description |
 |-----------|-------------|
-| Add Stake | Stake TAO tokens to a specific validator |
-| Remove Stake | Unstake TAO tokens from a validator |
-| Get Stake Info | Retrieve current stake information for an address |
-| List Stakes | Get all active stakes for a wallet |
-| Calculate Rewards | Estimate staking rewards for a given amount |
-| Get Stake History | Retrieve historical staking transactions |
+| Create | Create a new subnet on the Bittensor network |
+| Get | Retrieve subnet information and metadata |
+| List | Get all subnets with filtering options |
+| Update | Modify subnet parameters and configuration |
+| Delete | Remove a subnet from the network |
+| Get Metrics | Retrieve subnet performance metrics |
 
-### 2. Delegation
+### 2. Validator
 
 | Operation | Description |
 |-----------|-------------|
-| Delegate | Delegate TAO tokens to a validator |
-| Undelegate | Remove delegation from a validator |
+| Register | Register a new validator node |
+| Get | Get validator details and status |
+| List | List validators with filtering by subnet |
+| Update | Update validator configuration |
+| Deregister | Remove validator from network |
+| Get Performance | Retrieve validator performance data |
+| Set Weights | Update validator weights |
+
+### 3. Staking
+
+| Operation | Description |
+|-----------|-------------|
+| Stake | Stake TAO tokens to validators |
+| Unstake | Remove staked tokens |
+| Get Balance | Check staking balance |
+| Get Rewards | Retrieve staking rewards history |
+| Get History | Get complete staking transaction history |
+| Claim Rewards | Claim pending staking rewards |
+
+### 4. Delegation
+
+| Operation | Description |
+|-----------|-------------|
+| Delegate | Delegate stake to a validator |
+| Undelegate | Remove delegation from validator |
 | Get Delegations | List all active delegations |
-| Delegate Performance | Get performance metrics for delegates |
-| Calculate Delegation Rewards | Estimate delegation rewards |
-| Get Delegate Info | Retrieve detailed delegate information |
-
-### 3. Subnets
-
-| Operation | Description |
-|-----------|-------------|
-| List Subnets | Get all available subnets |
-| Get Subnet Info | Retrieve detailed subnet information |
-| Get Registration Cost | Get current registration cost for a subnet |
-| Get Subnet Metrics | Retrieve performance metrics for a subnet |
-| List Subnet Validators | Get all validators in a specific subnet |
-| Get Subnet Emissions | Retrieve emission data for a subnet |
-
-### 4. Validators
-
-| Operation | Description |
-|-----------|-------------|
-| List Validators | Get all validators with basic information |
-| Get Validator Info | Retrieve detailed validator information |
-| Get Validator Performance | Get performance metrics for a validator |
-| Get Validator Emissions | Retrieve emission history for a validator |
-| Check Validator Status | Get current online/offline status |
-| Get Validator Rankings | Retrieve validator rankings by various metrics |
+| Transfer | Transfer delegation between validators |
+| Get Returns | Calculate delegation returns |
+| Rebalance | Automatically rebalance delegations |
 
 ### 5. Network
 
 | Operation | Description |
 |-----------|-------------|
-| Get Network Stats | Retrieve overall network statistics |
-| Get Block Info | Get information about a specific block |
-| Get Latest Block | Retrieve the most recent block data |
-| Get Network Parameters | Get current network configuration parameters |
-| Get Total Issuance | Retrieve total TAO token supply information |
-| Get Consensus Data | Access current consensus mechanism data |
+| Get Status | Get overall network status |
+| Get Metrics | Retrieve network-wide metrics |
+| Get Blocks | Get recent block information |
+| Get Transactions | List recent transactions |
+| Get Difficulty | Get current mining difficulty |
+| Get Supply | Get total TAO supply information |
 
 ## Usage Examples
 
 ```javascript
-// Example 1: Check validator performance before staking
-const validatorInfo = await this.helpers.request({
-  method: 'GET',
-  url: '/validators/5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL',
-  headers: {
-    'Authorization': `Bearer ${credentials.apiKey}`
-  }
-});
-
-if (validatorInfo.performance_score > 0.8) {
-  // Proceed with staking 100 TAO
-  const stakeResult = await this.helpers.request({
-    method: 'POST',
-    url: '/staking/add',
-    body: {
-      validator_address: '5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL',
-      amount: 100,
-      wallet_address: credentials.walletAddress
-    }
-  });
+// Create a new subnet
+{
+  "name": "AI Training Subnet",
+  "netuid": 42,
+  "tempo": 100,
+  "immunity_period": 7200
 }
 ```
 
 ```javascript
-// Example 2: Monitor subnet registration opportunities
-const subnets = await this.helpers.request({
-  method: 'GET',
-  url: '/subnets',
-  headers: {
-    'Authorization': `Bearer ${credentials.apiKey}`
-  }
-});
-
-const affordableSubnets = subnets.filter(subnet => 
-  subnet.registration_cost <= 1000 && subnet.available_slots > 0
-);
-
-for (const subnet of affordableSubnets) {
-  console.log(`Subnet ${subnet.netuid}: ${subnet.registration_cost} TAO, ${subnet.available_slots} slots`);
+// Stake TAO to a validator
+{
+  "validator_hotkey": "5GNJqTPyNqANBkUVMN1LPPrxXnFouWXoe2wNSmmEoLctxiZY",
+  "amount": 1000,
+  "subnet_id": 1
 }
 ```
 
 ```javascript
-// Example 3: Track delegation rewards across multiple validators
-const delegations = await this.helpers.request({
-  method: 'GET',
-  url: '/delegations',
-  params: {
-    wallet_address: credentials.walletAddress
-  }
-});
-
-let totalRewards = 0;
-for (const delegation of delegations) {
-  const rewards = await this.helpers.request({
-    method: 'GET',
-    url: `/delegations/${delegation.id}/rewards`,
-    params: {
-      period: '30d'
-    }
-  });
-  totalRewards += rewards.total_rewards;
+// Query network metrics
+{
+  "metrics": ["total_stake", "active_validators", "subnet_count"],
+  "timeframe": "24h"
 }
-
-console.log(`Total delegation rewards (30 days): ${totalRewards} TAO`);
 ```
 
 ```javascript
-// Example 4: Network health monitoring
-const networkStats = await this.helpers.request({
-  method: 'GET',
-  url: '/network/stats'
-});
-
-const alertThresholds = {
-  minValidators: 1000,
-  maxBlockTime: 12,
-  minNetworkStake: 100000
-};
-
-if (networkStats.active_validators < alertThresholds.minValidators) {
-  // Trigger alert workflow
-  this.emit('low-validator-count', networkStats);
-}
-
-if (networkStats.avg_block_time > alertThresholds.maxBlockTime) {
-  // Trigger slow network alert
-  this.emit('slow-network', networkStats);
+// Delegate stake with auto-rebalancing
+{
+  "validators": [
+    {"hotkey": "5GNJq...", "percentage": 60},
+    {"hotkey": "5HKLp...", "percentage": 40}
+  ],
+  "total_amount": 5000,
+  "auto_rebalance": true
 }
 ```
 
@@ -221,12 +168,12 @@ if (networkStats.avg_block_time > alertThresholds.maxBlockTime) {
 
 | Error | Description | Solution |
 |-------|-------------|----------|
-| 401 Unauthorized | Invalid or missing API key | Verify API key in credentials setup |
-| 403 Insufficient Funds | Not enough TAO for staking operation | Check wallet balance and reduce stake amount |
-| 404 Validator Not Found | Invalid validator address provided | Verify validator address exists on network |
-| 429 Rate Limit Exceeded | Too many API requests in time window | Implement request throttling or increase delays |
-| 500 Network Error | Bittensor network connectivity issues | Check network status and retry operation |
-| 503 Node Unavailable | RPC node temporarily unavailable | Switch to backup RPC endpoint or retry later |
+| Invalid API Key | Authentication failed | Verify API key in credentials |
+| Network Timeout | Request timed out | Check network connectivity and retry |
+| Insufficient Balance | Not enough TAO for operation | Check wallet balance before staking |
+| Validator Not Found | Validator hotkey invalid | Verify validator exists and is active |
+| Subnet Full | No available slots in subnet | Wait for slot availability or try another subnet |
+| Rate Limit Exceeded | Too many requests | Implement delays between requests |
 
 ## Development
 
@@ -271,5 +218,5 @@ Contributions are welcome! Please ensure:
 ## Support
 
 - **Issues**: [GitHub Issues](https://github.com/Velocity-BPA/n8n-nodes-bittensor/issues)
-- **Bittensor Docs**: [Bittensor Documentation](https://docs.bittensor.com/)
+- **Bittensor Docs**: [Bittensor Documentation](https://docs.bittensor.com)
 - **Community**: [Bittensor Discord](https://discord.gg/bittensor)
