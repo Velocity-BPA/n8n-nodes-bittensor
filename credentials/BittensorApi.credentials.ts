@@ -12,18 +12,19 @@ export class BittensorApi implements ICredentialType {
 			displayName: 'API Key',
 			name: 'apiKey',
 			type: 'string',
-			typeOptions: { password: true },
+			typeOptions: {
+				password: true,
+			},
 			default: '',
 			required: true,
-			description: 'The API key for authenticating with Bittensor API',
+			description: 'API key for Bittensor. Register for an API key through the Bittensor dashboard.',
 		},
 		{
-			displayName: 'API Base URL',
+			displayName: 'Base URL',
 			name: 'baseUrl',
 			type: 'string',
 			default: 'https://api.bittensor.com/v1',
-			required: true,
-			description: 'The base URL for the Bittensor API',
+			description: 'Base URL for Bittensor API',
 		},
 	];
 }
